@@ -1,4 +1,6 @@
-\NeedsTeXFormat{LaTeX2e}[2020/10/01]
+\NeedsTeXFormat{LaTeX2e}
+\@ifundefined{ProvidesExplPackage}{\RequirePackage{expl3}}{}
+\@ifundefined{NewDocumentCommand}{\RequirePackage{xparse}}{}
 \ProvidesExplPackage{updatemarks}{2023/09/01}{v0.1}{extract and update marks from box}
 \RequirePackage{etoolbox}
 
@@ -186,7 +188,9 @@
           }
       }
   }
-\hook_gput_code:nnn { begindocument/end } { updatemarks } 
+\cs_if_exist:NTF \hook_gput_code:nnn
+  { \hook_gput_code:nnn { begindocument/end } { updatemarks } }
+  { \AtBeginDocument }
   { 
     \__updatemarks_get_all_classes: 
     \int_step_inline:nnn { 0 } { \g_updatemarks_max_int }
@@ -230,10 +234,12 @@
     \patchcmd \tcbox@inner@hbox { \tcbdimto }
       { \extractmarks@of{tcolorbox}{\unhcopy\tcb@upperbox}\tcbdimto }
       { } { \ERROR }
+    \let\endtcb@lrbox=\updatemarks@endminipage 
     \patchcmd \endtcb@lrbox 
       { \color@endgroup\egroup } 
       { \color@endgroup\egroup\extractmarks@of{tcolorbox}{\unvcopy\@tempboxa} } 
       { } { \ERROR }
+    \let\endtcb@savebox=\endtcb@lrbox
     \patchcmd \tcb@drawing@env@end { \csname }
       { \updatemarks@of{tcolorbox}\csname } { } { \ERROR }
     % breakable library
@@ -265,9 +271,10 @@
         { } { \ERROR }
     \fi 
   }
-\@ifpackageloaded{tcolorbox}{\updatemarks@tcolorbox@patch}
-  {\AddToHook{package/tcolorbox/after}{\let\endtcb@lrbox\updatemarks@endminipage
-    \AtBeginDocument{\updatemarks@tcolorbox@patch}}}
+\cs_if_exist:NTF \hook_gput_code:nnn
+  { \hook_gput_code:nnn { begindocument } { updatemarks } }
+  { \AtBeginDocument }
+    {\@ifpackageloaded{tcolorbox}{\updatemarks@tcolorbox@patch}{}}
 
 
 \keys_define:nn { updatemarks }
