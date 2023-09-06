@@ -2,11 +2,11 @@
 % Copyright 2023 Wenjian Chern.
 %
 % This work may be distributed and/or modified under the
-% conditions of the LaTeX Project Public License, either version 1.3
+% conditions of the LaTeX Project Public License, either version 1.3c
 % of this license or any later version.
 % The latest version of this license is in
 %   http://www.latex-project.org/lppl.txt
-% and version 1.3 or later is part of all distributions of LaTeX
+% and version 1.3c or later is part of all distributions of LaTeX
 % version 2005/12/01 or later.
 %
 % This work has the LPPL maintenance status `maintained'.
@@ -18,7 +18,7 @@
 \NeedsTeXFormat{LaTeX2e}
 \@ifundefined{ProvidesExplPackage}{\RequirePackage{expl3}}{}
 \@ifundefined{NewDocumentCommand}{\RequirePackage{xparse}}{}
-\ProvidesExplPackage{updatemarks}{2023/09/03}{0.2b}{extract and update marks from box}
+\ProvidesExplPackage{updatemarks}{2023/09/05}{0.2c}{extract and update marks from box}
 \RequirePackage{etoolbox}
 
 \seq_new:N \g__updatemarks_seq
@@ -103,20 +103,59 @@
   }
 
 
+\bool_new:N \l_updatemarks_nonempty_bool 
+\tl_new:N \l__updatemarks_saved_tl
 \cs_new_protected:Npn \updatemarks_save:Nnn #1#2#3 % seq, pos, value 
   { 
-    \seq_map_inline:Nn #1 
-      { \tl_gset:co { g__updatemarks_#2-##1_tl } { #3 {##1} } }
+    \bool_if:NTF \l_updatemarks_nonempty_bool
+      {
+        \seq_map_inline:Nn #1
+          {
+            \tl_set:No \l__updatemarks_saved_tl { #3 {##1} }
+            \tl_if_empty:NF \l__updatemarks_saved_tl
+              { \tl_gset_eq:cN { g__updatemarks_#2-##1_tl } \l__updatemarks_saved_tl }
+          }
+      }
+      {
+        \seq_map_inline:Nn #1 
+          {
+            \tl_gset:co { g__updatemarks_#2-##1_tl } { #3 {##1} } 
+          }
+      }
   }
 \cs_new_protected:Npn \updatemarks_save_x:Nnn #1#2#3 % seq, pos, value 
   { 
-    \seq_map_inline:Nn #1 
-      { \tl_gset:cx { g__updatemarks_#2-##1_tl } { #3 {##1} } }
+    \bool_if:NTF \l_updatemarks_nonempty_bool
+      {
+        \seq_map_inline:Nn #1
+          {
+            \tl_set:Nx \l__updatemarks_saved_tl { #3 {##1} }
+            \tl_if_empty:NF \l__updatemarks_saved_tl
+              { \tl_gset_eq:cN { g__updatemarks_#2-##1_tl } \l__updatemarks_saved_tl }
+          }
+      }
+      {
+        \seq_map_inline:Nn #1 
+          {
+            \tl_gset:cx { g__updatemarks_#2-##1_tl } { #3 {##1} } 
+          }
+      }
   }
 \cs_new_protected:Npn \updatemarks_alias:Nnn #1#2#3 % seq, pos1, pos2
   {
-    \seq_map_inline:Nn #1
-      { \tl_gset_eq:cc { g__updatemarks_#2-##1_tl } { g__updatemarks_#3-##1_tl } }
+    \bool_if:NTF \l_updatemarks_nonempty_bool
+      {
+        \seq_map_inline:Nn #1
+          {
+            \tl_set_eq:Nc \l__updatemarks_saved_tl { g__updatemarks_#3-##1_tl }
+            \tl_if_empty:NF \l__updatemarks_saved_tl
+              { \tl_gset_eq:cN { g__updatemarks_#2-##1_tl } \l__updatemarks_saved_tl }
+          }
+      }
+      {
+        \seq_map_inline:Nn #1
+          { \tl_gset_eq:cc { g__updatemarks_#2-##1_tl } { g__updatemarks_#3-##1_tl } }
+      }
   }
 \cs_new_protected:Npn \updatemarks_remove:Nn #1#2 % seq, pos
   { \seq_map_inline:Nn #1 { \cs_undefine:c { g__updatemarks_#2-##1_tl } } }
@@ -259,11 +298,7 @@
       }
   }
   { 
-    \AtBeginDocument 
-      {
-        \int_step_inline:nnn { 0 } { \g_updatemarks_max_int }
-          { \seq_gput_right:Nn \g_updatemarks_seq {#1} }
-      }
+    \AtBeginDocument { \AddAllocatedToUpdateMarksList }
   }
 
 \msg_new:nnn { updatemarks } { unknown-class } { Unknown~mark~class~`#1'. }
@@ -316,7 +351,8 @@
     \apptocmd \endminipage { \updatemarks@of{minipage} } { } { \ERROR }
   }
 % tcolorbox
-\providecommand \updatemarks@tcolorbox@patch 
+\cs_if_exist:NTF \updatemarks@tcolorbox@patch { \use_none:n } 
+  { \tl_const:Nn \updatemarks@tcolorbox@patch }
   {
     \tcbset{updatemarks/.is~choice,
       updatemarks/true/.code=\bool_set_true:N \l__updatemarks_tcolorbox_bool,
@@ -363,7 +399,8 @@
     \fi 
   }
 % multicol 
-\providecommand \updatemarks@multicol@patch 
+\cs_if_exist:NTF \updatemarks@multicol@patch { \use_none:n }
+  { \tl_const:Nn \updatemarks@multicol@patch }
   {
     %% the patch is used to extract marks
     \tl_set:No \set@keptmarks 
@@ -402,14 +439,16 @@
     % patches of new mark mechanism 
     \updatemarks@multicolnewmark@patch
   }
-\providecommand \updatemarks@adjmulticol@patch 
+\cs_if_exist:NTF \updatemarks@adjmulticol@patch { \use_none:n }
+  { \tl_const:Nn \updatemarks@adjmulticol@patch }
   {
     \patchcmd \adjmc@process@ne@column { \unvbox }
       { \extractmarks@of{multicol}{\unvcopy\mult@box}\unvbox }
       { } { \ERROR }
     \updatemarks@adjmulticolnewmark@patch
   }
-\providecommand \updatemarks@paracol@patch 
+\cs_if_exist:NTF \updatemarks@paracol@patch { \use_none:n }
+  { \tl_const:Nn \updatemarks@paracol@patch }
   {
     \updatemarks@paracolnewmark@patch 
   }
@@ -451,12 +490,8 @@
   {
     \bool_if:NT \l__updatemarks_multicol_bool
       {
-        \seq_map_inline:Nn \g_updatemarks_seq 
-          {
-            \tl_set:Nx \l__updatemarks_tl { \updatemarks_value:nn { top } {#1} }
-            \tl_if_empty:NT \l__updatemarks_tl
-              { \tl_gset:co { g__updatemarks_top-#1_tl } { \tex_topmarks:D #1 } }
-          }
+        \bool_set_false:N \l_updatemarks_nonempty_bool
+        \updatemarks_save:Nnn \g_updatemarks_seq { top } { \tex_topmarks:D \use:n }
       }
   }
 \tl_const:Nn \updatemarks@multicol@middlepage
