@@ -13,13 +13,13 @@
 % 
 % The Current Maintainer of this work is Wenjian Chern.
 %
-% This work consists of the files updatemarks.sty, updatemarks.tex and parserange.sty
+% This work consists of the files updatemarks.sty and updatemarks.tex
 %
 \NeedsTeXFormat{LaTeX2e}
 \@ifundefined{NewDocumentCommand}{\RequirePackage{xparse}}{}
 \ProvidesExplPackage{updatemarks}{2024/02/19}{0.2e}{extract and update marks from box}
 \RequirePackage{etoolbox}
-\RequirePackage{parserange}
+\RequirePackage{updatemarks-nums}
 
 \seq_new:N \g__updatemarks_seq
 \box_new:N \l__updatemarks_r_box 
