@@ -4,7 +4,7 @@
 
 \title{Update marks in box\thanks{Issues: \url{https://github.com/Sophanatprime/updatemarks/issues}}}
 \author{WenJian Chern\thanks{Email: longaster@163.com}}
-\date{\today\qquad v0.2c}
+\date{\today\qquad v0.2e}
 
 \begin{document}
 
@@ -138,6 +138,7 @@ Specially, for those mark classes declared by \cs{NewMarkClass}, you are able to
 \begin{verbatim}
   \RemoveFromUpdateMarksList { [2e-right], 4, \MarkClass{my-class} }
 \end{verbatim}
+You can also use number ranges in \meta{number list}, such as \verb|2 -> 5|.
 \end{function}
 
 
@@ -204,8 +205,22 @@ or if not in a box then the main vertical list.
 
 If \meta{number list} is presented, the mark classes are these numbers, otherwise
 they are the automatical updating list.
+
+\texttt{insertmark} hook would not be used as it's already been used.
 \end{function}
 
+\begin{function}[added=2024-02-19]{\ExtractMarksTo}
+  \begin{syntax}
+    \verb|\ExtractMarks| \marg{box number} \marg{cmd}
+    \verb|\ExtractMarks| \oarg{number list} \marg{box number} \marg{cmd}
+    \verb|\ExtractMarks| * \marg{text} \marg{cmd}
+    \verb|\ExtractMarks| * \oarg{number list} \marg{text} \marg{cmd}
+  \end{syntax}
+It collect all marks to \tn[no-index]{cmd}, you can use \tn[no-index] to reinsert
+these marks.
+
+\texttt{insertmark} hook would not be used as it's already been used.
+\end{function}
 
 \section{Disable patches or write your own patches}
 
@@ -229,20 +244,46 @@ you are able set them in preamble before or after \pkg{updatemarks} is loaded.
 
 This section describes the interfaces of \LaTeX3.
 
+\begin{function}[added=2024-02-19]{\updatemarks_parse_classes:Nn}
+  \begin{syntax}
+    \verb|\updatemarks_parse_classes:Nn| \meta{seq var} \marg{number list}
+  \end{syntax}
+Parse number list and save it to \meta{seq var}.
+\end{function}
+
 \begin{function}{\updatemarks_extract:nN,\updatemarks_extract_split:N}
   \begin{syntax}
-    \verb|\updatemarks_extract:nN| \marg{box material} \meta{seq var}
+    \verb|\updatemarks_extract:nN| \marg{material} \meta{seq var}
     \verb|\updatemarks_extract_split:N| \meta{seq var}
   \end{syntax}
-These two functions have the same functions of 
-\cs{ExtractMarks} and \cs{ExtractSplitMarks}.
+Programming interface of \cs{ExtractMarks} and \cs{ExtractSplitMarks}, respectively.
 
-\meta{box material} is content to build a box.
+\meta{material} is content to build a box.
 Such as unpacked box using \cs{hbox_unpack:N} or \cs{vbox_unpack:N} or text.
 
 \meta{seq var} is the number sequence of mark classes which are need to be extracted.
 
 They only save the marks whose positions are first or last.
+\end{function}
+
+\begin{function}[added=2024-02-19]{\updatemarks_extract:nNN}
+  \begin{syntax}
+    \verb|\updatemarks_extract:nNN| \marg{material} \meta{seq var} \meta{tl var}
+  \end{syntax}
+Programming interface of \cs{ExtractMarksTo}.
+
+\texttt{insertmark} hook would not be used as it's already been used.
+\end{function}
+
+\begin{function}[added=2024-02-19]{\updatemarks_extract_act:nNn}
+  \begin{syntax}
+    \verb|\updatemarks_extract_act:nNn| \marg{material} \meta{seq var} \marg{code}
+  \end{syntax}
+Run \meta{code} for every mark classes in \meta{seq var}, the code can use one 
+parameter, which is the current mark class, and two \texttt{tl} variable
+\cs{l_updatemarks_first_tl} and \cs{l_updatemarks_last_tl}, which save
+the first and last marks at specified mark class, respectively. If these two \texttt{tl}
+is not exist, then no marks at the mark class are inserted.
 \end{function}
 
 \begin{function}{\updatemarks_update:N}
@@ -255,6 +296,8 @@ This function has the same function of \cs{UpdateMarks}.
 reinserted into the current box or the main vertical list.
 
 It only reinserts marks whose positions are first or last.
+
+\texttt{insertmark} hook would not be used as it's already been used.
 \end{function}
 
 \begin{function}{\updatemarks_save:Nnn}
@@ -268,12 +311,13 @@ If \cs{l_updatemarks_nonempty_bool} is set to \texttt{true}, then the expanded v
 will not be saved if it is total empty.
 
 The \meta{value code} receives each item in the \meta{seq var} 
-as a trailing brace group.
+as a trailing brace group, than expand the whole part of
+\meta{value code} and the trailing group \emph{once}.
 \end{function}
 
-\begin{function}{\updatemarks_save_x:Nnn}
+\begin{function}{\updatemarks_save_e:Nnn}
   \begin{syntax}
-    \verb|\updatemarks_save_x:Nnn| \meta{seq var} \marg{position} \marg{value code}
+    \verb|\updatemarks_save_e:Nnn| \meta{seq var} \marg{position} \marg{value code}
   \end{syntax}
 Saving marks at \meta{position} of specified mark classes \meta{seq var},
 whose values are fully expanding \meta{value code}.
@@ -282,7 +326,8 @@ If \cs{l_updatemarks_nonempty_bool} is set to \texttt{true}, then the expanded v
 will not be saved if it is total empty.
 
 The \meta{value code} receives each item in the \meta{seq var} 
-as a trailing brace group.
+as a trailing brace group, then \emph{fully expand} the whole part of 
+\meta{value code} and the trailing group.
 \end{function}
 
 \begin{function}{\updatemarks_alias:Nnn}
@@ -333,5 +378,11 @@ A local \texttt{bool} variable which is used to control if is going to save
 a total empty value.
 \end{function}
 
+\begin{function}{\l_updatemarks_first_tl,\l_updatemarks_last_tl}
+A local \texttt{tl} variable which are use to save the first and last marks.
+\end{function}
+
+
+\PrintIndex
 
 \end{document}

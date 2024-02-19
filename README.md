@@ -8,6 +8,6 @@ use `\UpdateMarks` to reinsert marks. Read the documentation for more details.
 
 # Copyright and License
 
-Copyright 2023 Wenjian Chern
+Copyright 2023, 2024 Wenjian Chern
 
 LICENSE: [LPPL 1.3c](http://www.latex-project.org/lppl.txt)
