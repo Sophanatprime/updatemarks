@@ -211,12 +211,12 @@ they are the automatical updating list.
 
 \begin{function}[added=2024-02-19]{\ExtractMarksTo}
   \begin{syntax}
-    \verb|\ExtractMarks| \marg{box number} \marg{cmd}
-    \verb|\ExtractMarks| \oarg{number list} \marg{box number} \marg{cmd}
-    \verb|\ExtractMarks| * \marg{text} \marg{cmd}
-    \verb|\ExtractMarks| * \oarg{number list} \marg{text} \marg{cmd}
+    \verb|\ExtractMarksTo| \marg{box number} \marg{cmd}
+    \verb|\ExtractMarksTo| \oarg{number list} \marg{box number} \marg{cmd}
+    \verb|\ExtractMarksTo| * \marg{text} \marg{cmd}
+    \verb|\ExtractMarksTo| * \oarg{number list} \marg{text} \marg{cmd}
   \end{syntax}
-It collect all marks to \meta{cmd}, you can use \meta{cmd} to reinsert these marks.
+It collects all marks to \meta{cmd}, then you can use \meta{cmd} to reinsert these marks.
 
 \texttt{insertmark} hook would not be used as it's already been used.
 \end{function}
