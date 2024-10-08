@@ -13,11 +13,11 @@
 % 
 % The Current Maintainer of this work is Wenjian Chern.
 %
-% This work consists of the files updatemarks.sty and updatemarks.tex
+% This work consists of the files updatemarks.sty, updatemarks.tex and updatemarks-nums.sty
 %
 \NeedsTeXFormat{LaTeX2e}
 \@ifundefined{NewDocumentCommand}{\RequirePackage{xparse}}{}
-\ProvidesExplPackage{updatemarks}{2024/02/19}{0.2e}{extract and update marks from box}
+\ProvidesExplPackage{updatemarks}{2024/10/07}{0.2f}{extract and update marks from box}
 \RequirePackage{etoolbox}
 \RequirePackage{updatemarks-nums}
 
@@ -451,8 +451,17 @@
       { \color@endgroup\egroup\extractmarks@of{tcolorbox}{\unvcopy\@tempboxa} } 
       { } { \ERROR }
     \let\endtcb@savebox=\endtcb@lrbox
-    \patchcmd \tcb@drawing@env@end { \csname }
-      { \updatemarks@of{tcolorbox}\csname } { } { \ERROR }
+    \ifdefined\tcb@drawing@env@end
+      \patchcmd \tcb@drawing@env@end { \csname }
+        { \updatemarks@of{tcolorbox}\csname } { } { \ERROR }
+    \else
+      \ifcsname environment~tcb@drawing~end~aux~ \endcsname
+        \tl_set:Nv \l_tmpa_tl { environment~tcb@drawing~end~aux~ }
+        \tl_if_in:NnF \l_tmpa_tl { \use:c } { \ERROR }
+        \tl_replace_once:Nnn \l_tmpa_tl { \use:c } { \updatemarks@of{tcolorbox}\use:c }
+        \exp_args:Nno \cs_set_nopar:cpn { environment~tcb@drawing~end~aux~ } \l_tmpa_tl
+      \else \ERROR \fi
+    \fi
     % breakable library
     \ifdefined \tcb@vsplit@upper 
       \apptocmd \tcb@vsplit@upper { \extractsplitmarks@of{tcolorbox} } { } { \ERROR }
