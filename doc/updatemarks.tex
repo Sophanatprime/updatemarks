@@ -4,7 +4,7 @@
 
 \title{Update marks in box\thanks{Issues: \url{https://github.com/Sophanatprime/updatemarks/issues}}}
 \author{WenJian Chern\thanks{Email: longaster@163.com}}
-\date{\today\qquad v0.2f}
+\date{\today\qquad v0.3}
 
 \begin{document}
 
@@ -77,8 +77,12 @@ by using \texttt{minipage} package option or set \texttt{minipage} key to true.
 marks in any other environments that use \env{minipage} will be updated, 
 including \env{varwidth} of \pkg{varwidth} package, etc.
 
+\section{Version 2.* of \pkg{multicol}}
 
-\section{\pkg{multicol} and \pkg{adjmulticol}}
+\pkg{multicol} has fully supported the new mark mechanism of \LaTeX{} since version 2.0,
+so no more things are needed to be done by \pkg{updatemarks}.
+
+\section{Version 1.* of \pkg{multicol} and \pkg{adjmulticol}}
 
 If \env{multicols} or \env{adjmulticols} or their starred versions are put in a box
 --- so called \emph{boxed multicols}, you are able to eanble automatically extracting 
@@ -310,7 +314,7 @@ If \cs{l_updatemarks_nonempty_bool} is set to \texttt{true}, then the expanded v
 will not be saved if it is total empty.
 
 The \meta{value code} receives each item in the \meta{seq var} 
-as a trailing brace group, than expand the whole part of
+as a trailing brace group, then expand the whole part of
 \meta{value code} and the trailing group \emph{once}.
 \end{function}
 

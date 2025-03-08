@@ -13,13 +13,13 @@
 % 
 % The Current Maintainer of this work is Wenjian Chern.
 %
-% This work consists of the files updatemarks.sty, updatemarks.tex and updatemarks-nums.sty
+% This work consists of the files updatemarks.sty, updatemarks.tex and parserange.sty
 %
 \NeedsTeXFormat{LaTeX2e}
 \@ifundefined{NewDocumentCommand}{\RequirePackage{xparse}}{}
-\ProvidesExplPackage{updatemarks}{2024/10/07}{0.2f}{extract and update marks from box}
+\ProvidesExplPackage{updatemarks}{2025/01/24}{0.3}{extract and update marks from box}
 \RequirePackage{etoolbox}
-\RequirePackage{updatemarks-nums}
+\RequirePackage{parserange}
 
 \seq_new:N \g__updatemarks_seq
 \box_new:N \l__updatemarks_r_box 
@@ -34,45 +34,52 @@
     \__updatemarks_extract:nn {#1}
       { \__updatemarks_extract_split:nn {#2} {#3} }
   }
-\cs_new_protected:Npn \__updatemarks_extract:nn #1#2 % material, code
+\cs_if_exist:NTF \__mark_extract_and_handle_marks:nn
   {
-    \group_begin:
-    \dim_set_eq:NN \tex_splitmaxdepth:D \c_max_dim
-    \int_set_eq:NN \tex_vbadness:D      \c_max_int
-    \dim_set_eq:NN \tex_vfuzz:D         \c_max_dim
-    \__updatemarks_prepare_and_extract:nn {#2} {#1}
-    \group_end:
+    \cs_new_protected:Npn \__updatemarks_extract:nn #1#2
+      { \__mark_extract_and_handle_marks:nn {#2} {#1} }
   }
-% old mechanism
-\cs_new_protected:Npn \__updatemarks_prepare_and_extract:nn #1#2 % code, material
   {
-    \vbox_set_to_ht:Nnw \l__updatemarks_r_box { -.5 \c_max_dim }
-      #2 \tex_unskip:D 
-      \box_set_to_last:N \l__updatemarks_r_box
-      \int_compare:nNnT { \tex_lastnodetype:D } < { 0 }
-        {
-          \box_if_vertical:NT \l__updatemarks_r_box
-            {
-              \vbox_set_to_ht:Nnn \l__updatemarks_r_box { -.5 \c_max_dim }
-                { \vbox_unpack:N \l__updatemarks_r_box \tex_kern:D \c_zero_dim }
-              \int_compare:nNnT { \tex_badness:D } > { 0 }
-                { \vbox_unpack:N \l__updatemarks_r_box }
-            }
-        }
-      \tex_kern:D \c_zero_dim
-    \vbox_set_end:
-    \int_compare:nNnTF { \tex_badness:D } > { 0 }
+    \cs_new_protected:Npn \__updatemarks_extract:nn #1#2 % material, code
       {
-        \vbox_set_split_to_ht:NNn \l__updatemarks_s_box \l__updatemarks_r_box \c_max_dim
-        #1
+        \group_begin:
+        \dim_set_eq:NN \tex_splitmaxdepth:D \c_max_dim
+        \int_set_eq:NN \tex_vbadness:D      \c_max_int
+        \dim_set_eq:NN \tex_vfuzz:D         \c_max_dim
+        \__updatemarks_prepare_and_extract:nn {#2} {#1}
+        \group_end:
       }
-      { \msg_error:nn { updatemarks } { infinite-shrinkage } }
-  }
-% new mechanism, copy a LaTeX kernel command
-\cs_if_exist:NT \__mark_prepare_and_extract:nn
-  {
-    \cs_gset_eq:NN \__updatemarks_prepare_and_extract:nn 
-      \__mark_prepare_and_extract:nn
+    % old mechanism
+    \cs_new_protected:Npn \__updatemarks_prepare_and_extract:nn #1#2 % code, material
+      {
+        \vbox_set_to_ht:Nnw \l__updatemarks_r_box { -.5 \c_max_dim }
+          #2 \tex_unskip:D 
+          \box_set_to_last:N \l__updatemarks_r_box
+          \int_compare:nNnT { \tex_lastnodetype:D } < { 0 }
+            {
+              \box_if_vertical:NT \l__updatemarks_r_box
+                {
+                  \vbox_set_to_ht:Nnn \l__updatemarks_r_box { -.5 \c_max_dim }
+                    { \vbox_unpack:N \l__updatemarks_r_box \tex_kern:D \c_zero_dim }
+                  \int_compare:nNnT { \tex_badness:D } > { 0 }
+                    { \vbox_unpack:N \l__updatemarks_r_box }
+                }
+            }
+          \tex_kern:D \c_zero_dim
+        \vbox_set_end:
+        \int_compare:nNnTF { \tex_badness:D } > { 0 }
+          {
+            \vbox_set_split_to_ht:NNn \l__updatemarks_s_box \l__updatemarks_r_box \c_max_dim
+            #1
+          }
+          { \msg_error:nn { updatemarks } { infinite-shrinkage } }
+      }
+    % new mechanism, copy a LaTeX kernel command
+    \cs_if_exist:NT \__mark_prepare_and_extract:nn
+      {
+        \cs_gset_eq:NN \__updatemarks_prepare_and_extract:nn 
+          \__mark_prepare_and_extract:nn
+      }
   }
 \cs_new_protected:Npn \__updatemarks_extract_split:nn #1#2 % map of number, code 
   {
@@ -492,6 +499,10 @@
     \fi 
   }
 % multicol 
+\bool_lazy_and:nnT %% multicol v2.0 has built-in support for new mark mechanism
+  { \cs_if_exist_p:N \__mc_update_mcol_structures: }
+  { ! \cs_if_exist_p:N \updatemarks@multicol@patch }
+  { \tl_const:Nn \updatemarks@multicol@patch { } }
 \cs_if_exist:NTF \updatemarks@multicol@patch { \use_none:n }
   { \tl_const:Nn \updatemarks@multicol@patch }
   {
