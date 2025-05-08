@@ -17,7 +17,7 @@
 %
 \NeedsTeXFormat{LaTeX2e}
 \@ifundefined{NewDocumentCommand}{\RequirePackage{xparse}}{}
-\ProvidesExplPackage{updatemarks}{2025/01/24}{0.3}{extract and update marks from box}
+\ProvidesExplPackage{updatemarks}{2025/05/08}{0.4}{extract and update marks from box}
 \RequirePackage{etoolbox}
 \RequirePackage{parserange}
 
@@ -498,50 +498,50 @@
         { } { \ERROR }
     \fi 
   }
-% multicol 
-\bool_lazy_and:nnT %% multicol v2.0 has built-in support for new mark mechanism
-  { \cs_if_exist_p:N \__mc_update_mcol_structures: }
-  { ! \cs_if_exist_p:N \updatemarks@multicol@patch }
-  { \tl_const:Nn \updatemarks@multicol@patch { } }
+% multicol
 \cs_if_exist:NTF \updatemarks@multicol@patch { \use_none:n }
   { \tl_const:Nn \updatemarks@multicol@patch }
   {
-    %% the patch is used to extract marks
-    \tl_set:No \set@keptmarks 
-      { \set@keptmarks \extractsplitmarks@of{multicol} }
+    %% multicol v2.0 has built-in support for new mark mechanism
+    \cs_if_exist:NF \__mc_update_mcol_structures:
+      {
+        %% the patch is used to extract marks
+        \tl_set:No \set@keptmarks 
+          { \set@keptmarks \extractsplitmarks@of{multicol} }
 
-    %% the patch is used for boxmulticols
-    \patchcmd \endmulticols { \page@sofar }
-      { \updatemarks@of{multicol}\page@sofar }
-      { } { \ERROR }
+        %% the patch is used for boxmulticols
+        \patchcmd \endmulticols { \page@sofar }
+          { \updatemarks@of{multicol}\page@sofar }
+          { } { \ERROR }
 
-    %% the patch is used for middle page to remove unnecessary extract
-    \patchcmd \multi@column@out { \let\topmark\kept@topmark }
-      { 
-        \let\topmark\kept@topmark 
-        \removemarks@of{multicol}{first}
-        \removemarks@of{multicol}{last}
+        %% the patch is used for middle page to remove unnecessary extract
+        \patchcmd \multi@column@out { \let\topmark\kept@topmark }
+          { 
+            \let\topmark\kept@topmark 
+            \removemarks@of{multicol}{first}
+            \removemarks@of{multicol}{last}
+          }
+          { } { \ERROR }
+
+        %% the patch is used for final page
+        \patchcmd \balance@columns@out { \page@sofar }
+          { \updatemarks@of{multicol}\page@sofar }
+          { } { \ERROR }
+
+        %% these patches are used to update marks after forced break 
+        \patchcmd \balance@columns@out { \unvbox\colbreak@box }
+          { \extractmarks@of{multicol}{\unvcopy\colbreak@box}\unvbox\colbreak@box }
+          { } { \ERROR }
+        \patchcmd \balance@columns@out { \unvbox\@cclv }
+          { \extractmarks@of{multicol}{\unvcopy\@cclv}\unvbox\@cclv }
+          { } { \ERROR }
+        \patchcmd \balance@columns { \get@keptmarks\mult@box }
+          { \if@boxedmulticols\get@keptmarks\mult@box\fi }
+          { } { }
+
+        % patches of new mark mechanism 
+        \updatemarks@multicolnewmark@patch
       }
-      { } { \ERROR }
-    
-    %% the patch is used for final page
-    \patchcmd \balance@columns@out { \page@sofar }
-      { \updatemarks@of{multicol}\page@sofar }
-      { } { \ERROR }
-
-    %% these patches are used to update marks after forced break 
-    \patchcmd \balance@columns@out { \unvbox\colbreak@box }
-      { \extractmarks@of{multicol}{\unvcopy\colbreak@box}\unvbox\colbreak@box }
-      { } { \ERROR }
-    \patchcmd \balance@columns@out { \unvbox\@cclv }
-      { \extractmarks@of{multicol}{\unvcopy\@cclv}\unvbox\@cclv }
-      { } { \ERROR }
-    \patchcmd \balance@columns { \get@keptmarks\mult@box }
-      { \if@boxedmulticols\get@keptmarks\mult@box\fi }
-      { } { }
-
-    % patches of new mark mechanism 
-    \updatemarks@multicolnewmark@patch
   }
 \cs_if_exist:NTF \updatemarks@adjmulticol@patch { \use_none:n }
   { \tl_const:Nn \updatemarks@adjmulticol@patch }
